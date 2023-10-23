@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blaze AI Application</title>
+    <style>
+        /* Style for the Blaze AI application */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #chatbox {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px auto;
+            max-width: 500px;
+            min-height: 300px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            overflow-y: scroll;
+        }
+
+        #user-input-form {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        #user-input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #file-input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Style for chat messages */
+        p {
+            margin: 10px 0;
+        }
+
+        /* Style for user and Blaze AI messages */
+        p strong {
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blaze AI Application</h1>
+    <div id="chatbox">
+        <!-- Chat messages will be displayed here -->
+    </div>
+    <form id="data-input">
+        <input type="file" id="file-input" placeholder="Upload Text file to load data" name="file" accept=".txt">
+        <button type="submit">Load</button>
+    </form>
+    <form id="user-input-form">
+        <input type="text" id="user-input" placeholder="Type your question...">
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        // JavaScript to handle user input and Blaze AI responses
+        const chatbox = document.getElementById('chatbox');
+        const userForm = document.getElementById('user-input-form');
+        const userInput = document.getElementById('user-input');
+        const dataForm = document.getElementById('data-input');
+        const fileInput = document.getElementById('file-input');
+
+        userForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const userMessage = userInput.value;
+            if (userMessage) {
+                // Display user's message
+                chatbox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+
+                // Send user input to the server for Blaze AI response
+                fetch('/chat', {
+                    method: 'POST',
+                    body: new URLSearchParams({ user_input: userMessage }),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                .then(response => response.text())
+                .then(data => {
+                    // Display Blaze AI's response
+                    chatbox.innerHTML += `<p><strong>Blaze AI:</strong> ${data}</p>`;
+                });
+
+                userInput.value = ''; // Clear user input field
+            }
+        });
+        dataForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Send the uploaded file to the server for processing
+                fetch('/process_file', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.text())
+                .then(data => {
+                    // Display chatbot's response
+                    chatbox.innerHTML += `<p><strong>SUMMARY:</strong> ${data}</p>`;
+                });
+
+                dataForm.remove()
+            }
+        });
+    </script>
+</body>
+</html>
