@@ -1,6 +1,7 @@
+import os
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
-import time
+from flask import Flask, request, render_template
 
 class Blaze():
     def __init__(self, text):
@@ -80,17 +81,50 @@ class Blaze():
         except:
             return "Couldn't find relevant data"
 
-print('#'*30 + 'Blaze AI Student v0.1' + '#'*30)
-x = str(input('Enter the data to be loaded : '))
-model = Blaze(x)
-print('Model Loaded')
-print('#'*30 + 'Summary' + '#'*30)
-print(model.get_summary())
-print('#'*30 + 'Summary' + '#'*30)
-time.sleep(3)
-while True:
-    query = str(input('Enter the question : '))
-    if query != None:
-        print('#'*30)
-        print('Answer found : ' + model.exact_Search(query))
-    else: continue
+model = Blaze('')
+
+def loadModel(text):
+    global model
+    model = Blaze(text)
+    return model.get_summary()
+
+def search(query):
+    global model
+    return model.exact_Search(query)
+
+app = Flask(__name__)
+def blazeAi_response(user_input):
+    global model
+    try:
+        return  model.exact_Search(user_input)
+    except:
+        return "Data isn't loaded"
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    user_input = request.form['user_input']
+    bot_response = blazeAi_response(user_input)
+    return bot_response
+
+@app.route('/process_file', methods=['POST'])
+def process_file():
+    file = request.files['file']
+    if file and file.filename.endswith('.txt'):
+        file.save(file.filename)
+        with open(file.filename) as f:
+            dta = ' '
+            cont = f.readlines()
+            for line in cont:
+                dta += line
+            bot_response = loadModel(dta)
+        return bot_response
+    else:
+        return "Invalid file. Please upload a .txt file."
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
